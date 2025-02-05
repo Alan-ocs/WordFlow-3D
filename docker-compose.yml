@@ -1,0 +1,46 @@
+services:
+  backend:
+    build: ./backend
+    container_name: wordcloud_backend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/wordcloud_db
+    depends_on:
+      - mongo
+    networks:
+      - wordcloud_network
+
+  frontend:
+    build: ./frontend
+    container_name: wordcloud_frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - wordcloud_network
+
+  mongo:
+    image: mongo:6
+    container_name: wordcloud_mongo
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=wordcloud_db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - wordcloud_network
+
+volumes:
+  mongo_data:
+
+networks:
+  wordcloud_network:
+    driver: bridge
